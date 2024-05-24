@@ -42,6 +42,7 @@ func main() {
 			return err
 		}
 		data.Name = putData.Name
+		data.Message = putData.Message
 
 		return c.JSON(http.StatusOK, data)
 	})
