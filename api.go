@@ -58,3 +58,100 @@ func main() {
 
 	e.Start(":8080")
 }
+
+
+
+
+
+
+
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/syndtr/goleveldb/leveldb"
+)
+
+type result struct {
+	Result struct {
+		List []struct {
+			Price  string `json:"price"`
+			Symbol string `json:"symbol"`
+		} `json:"list"`
+	} `json:"result"`
+}
+
+func getPrice(db *leveldb.DB) error {
+	prices := make([]float64, 20)
+	for {
+
+		rest, err := http.Get("https://api.bybit.com/spot/v3/public/quote/ticker/price")
+		if err != nil {
+			return err
+		}
+		defer rest.Body.Close()
+
+		var responseData result
+		if err := json.NewDecoder(rest.Body).Decode(&responseData); err != nil {
+			return err
+		}
+
+		for _, v := range responseData.Result.List {
+
+			if strings.HasSuffix(v.Symbol, "USDT") {
+
+				//
+				// if err := db.Put([]byte(v.Symbol), []byte(v.Price), nil); err != nil {
+				// 	return err
+				// }
+
+				val, err := db.Get([]byte(v.Symbol), nil)
+				if err != nil {
+					return err
+				}
+
+				strVal := string(v.Price)
+
+				floatVal, err := strconv.ParseFloat(strVal, 64)
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+
+				prices = append(prices, floatVal)
+
+				byteArray, err := json.Marshal(val)
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+
+				if err := db.Put([]byte(v.Symbol), byteArray, nil); err != nil {
+					return err
+				}
+
+				strData := string(val)
+
+				fmt.Printf("Symbol: %s, New Value: %s\n", v.Symbol, strData)
+			}
+		}
+		time.Sleep(5 * time.Second)
+	}
+}
+func main() {
+
+	db, err := leveldb.OpenFile("example_db3", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	getPrice(db)
+	defer db.Close()
+
+	// go GetinApi(db)
+	// go SearchinData(db, "BTCUSDT")
+}
