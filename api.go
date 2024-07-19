@@ -59,13 +59,7 @@ func main() {
 	e.Start(":8080")
 }
 
-
-
-
-
-
-
-package main
+/*package main
 
 import (
 	"encoding/json"
@@ -154,4 +148,4 @@ func main() {
 
 	// go GetinApi(db)
 	// go SearchinData(db, "BTCUSDT")
-}
+}*/
