@@ -9,6 +9,7 @@ import (
 type PostData struct {
 	Lastname string `json:"Lastname"`
 	Name     string `json:"Name"`
+	Phone    string `json:"Phone"`
 }
 
 func main() {
